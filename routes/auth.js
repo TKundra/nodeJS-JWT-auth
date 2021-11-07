@@ -63,12 +63,12 @@ router.post('/login', async(req,res)=>{
 
     // create and assign token to user wheh login
     const token = jwt.sign(
-        {_id: user._id},
-        process.env.TOKEN_KEY,
-        //{expiresIn: "2h"}
+        {_id: user._id}, // payload
+        process.env.TOKEN_KEY, // secret
+        {expiresIn: "20s"} // expires in
     );
-    // send token
-    res.header('auth-token', token).send(token);
+    // send token to client
+    res.header('auth-token', token).json({access_token: token, msg: "expires within 2 hours"});
 
     console.log(validatePassword);
 
