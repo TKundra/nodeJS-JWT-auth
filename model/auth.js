@@ -6,6 +6,6 @@ const userSchema = new Schema({
     email: {type: String, min: 6, max: 255, required: true},
     password: {type: String, min: 6, max: 1024, required: true},
     date: {type: Date, default: Date.now},
-});
+}, {timestamps: true});
 
 export default mongoose.model('Users', userSchema);

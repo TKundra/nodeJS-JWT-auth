@@ -2,7 +2,6 @@ import express from 'express';
 import User from '../model/auth';
 import {registerValidation, loginValidation} from '../validation/auth';
 import bcrypt from 'bcryptjs';
-import {encrypt, decrypt} from '../en-de/en-de';
 import jwt from 'jsonwebtoken';
 
 const router = express.Router();
@@ -22,14 +21,14 @@ router.post('/register', async(req, res)=>{
     }
 
     // hash the password
-    const encryptedPassword = encrypt(req.body.password);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(req.body.password, salt);
   
     // create user
     const user = new User({
         name: req.body.name,
         email: req.body.email,
-        password: `${encryptedPassword.iv}${encryptedPassword.content}`,
-        date: req.body.date
+        password: hashedPassword
     });
     try {
         await user.save();
@@ -54,23 +53,14 @@ router.post('/login', async(req,res)=>{
         return res.status(400).json({error: "email doesn't exists"});
     }
 
-    // password validation
-    let decryptedPassword = decrypt(user.password).toString();
-    const validatePassword = (decryptedPassword == req.body.password);
-    if (!validatePassword) {
-        return res.status(400).json({error: "wrong password"});
-    }
-
     // create and assign token to user wheh login
     const token = jwt.sign(
         {_id: user._id}, // payload
         process.env.TOKEN_KEY, // secret
-        {expiresIn: "20s"} // expires in
+        {expiresIn: "10s"} // expires in
     );
-    // send token to client
-    res.header('auth-token', token).json({access_token: token, msg: "expires within 2 hours"});
-
-    console.log(validatePassword);
+    // send token to client by storing it in cookie
+    res.cookie('auth-token', token).send(`log-in successfully`);
 
 });
 
